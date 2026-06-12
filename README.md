@@ -50,15 +50,25 @@ gs -sDEVICE=pdfwrite -dNOPAUSE -dBATCH -sOutputFile=/dev/null output.pdf
 
 **注意**：Ghostscript 通过不代表 Acrobat 通过。Mac Preview 过于宽松，不能替代 Acrobat。
 
-## 适用条件
+## 适用范围
 
-本脚本适用于满足以下条件的 PDF 文件：
+本脚本**不是通用的 PDF 压缩工具**。它专门针对 AI 导出 PDF 中的一种特定冗余模式：单页内包含数千到数万个 Form XObject，每个 XObject 绘制相同形状中的一种，仅位置坐标不同。典型场景是散点图等由大量重复图元组成的矢量图形。
 
-- 由 Adobe Illustrator 导出
-- 页面 Content Stream 中的 XObject（Form XObject）流结构为：`<图形状态设置> q 1 0 0 1 X Y cm <绘制指令> Q`
-- 不同 XObject 之间存在大量重复的绘制形状（仅位置不同）
+### 必须满足的条件
 
-不满足上述结构的文件需要修改脚本中的正则匹配逻辑。
+- 由 Adobe Illustrator 导出（`.ai` 或保存的 PDF）
+- 单页，包含大量 Form XObject（通常数千以上）
+- 每个 XObject 的流结构为：`<图形状态设置> q 1 0 0 1 X Y cm <绘制指令> Q`
+- 不同 XObject 之间共享少量绘制形状，唯一差异是位置
+
+### 不适用的文件
+
+- 学术论文、文档类 PDF（页数多、XObject 少、无重复形状）——几乎没有优化空间
+- 非 AI 导出的 PDF（流结构不匹配正则）
+- 每个绘制形状都唯一的文件（无法去重）
+- 包含透明度、混合模式等需要 Group/Resources 的文件（删除后可能丢失渲染效果）
+
+使用前建议先用 Ghostscript 验证输出文件，再用 Acrobat 确认。
 
 ## 经验总结
 
